@@ -1,11 +1,14 @@
 buildscript {
-    ext.kotlin_version = '1.4.10'
+    ext.kotlin_version = '1.5.31'
     repositories {
+        maven { url 'https://mirrors.tencent.com/nexus/repository/maven-public/' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://jitpack.io' }
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.android.tools.build:gradle:7.0.4'
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.28.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
@@ -16,8 +19,11 @@ allprojects {
         if (project.hasProperty('LOCAL_MAVEN_URL')) {
             maven { url LOCAL_MAVEN_URL }
         }
+        maven { url 'https://mirrors.tencent.com/nexus/repository/maven-public/' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://jitpack.io' }
         google()
-        jcenter()
+        mavenCentral()
 //        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
     }
     version = VERSION_NAME
@@ -34,7 +40,7 @@ task clean(type: Delete) {
 }
 
 wrapper {
-    gradleVersion '6.1.1'
+    gradleVersion '7.2'
     distributionType 'all'
 }
 
@@ -49,7 +55,7 @@ if (hasProperty('local')) {
 ext {
 
     config = [
-            'build-tools'    : '29.0.3',
+            'build-tools'    : '30.0.2',
             'compile-sdk'    : 29,
             'target-sdk'     : 29,
             'min-sdk'        : 16,
@@ -90,7 +96,7 @@ ext {
             'coil'                    : "io.coil-kt:coil:$coilVersion",
             'coil-base'               : "io.coil-kt:coil-base:$coilVersion",
             'ix-java'                 : 'com.github.akarnokd:ixjava:1.0.0',
-            'gson'                    : 'com.google.code.gson:gson:2.8.6',
+            'gson'                    : 'com.google.code.gson:gson:2.12.1',
             'commons-io'              : 'commons-io:commons-io:2.6'
     ]
 
@@ -130,9 +136,10 @@ def registerArtifact(project) {
 
     project.afterEvaluate {
 
-        // disable generation of BuildConfig files
-        project.generateDebugBuildConfig.enabled = false
-        project.generateReleaseBuildConfig.enabled = false
+        // disable generation of BuildConfig files (AGP 7.x variant API)
+        project.android.libraryVariants.all { variant ->
+            variant.generateBuildConfigProvider.configure { it.enabled = false }
+        }
 
         // print test status (for CI)
         project.android.testOptions.unitTests.all {

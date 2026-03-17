@@ -14,7 +14,7 @@ def gitSha = { ->
 
 android {
 
-    compileSdkVersion config['compile-sdk']
+    compileSdk config['compile-sdk']
     buildToolsVersion config['build-tools']
 
     defaultConfig {
@@ -38,11 +38,6 @@ android {
         ]
     }
 
-    dexOptions {
-        preDexLibraries true
-        javaMaxHeapSize '5g'
-    }
-
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -61,42 +56,15 @@ android {
     // do not sign in CI
     if (!project.hasProperty('CI')) {
         signingConfigs {
-            config {
-
-                final def keystoreFile = project.file('keystore.jks')
-                final def keystoreFilePassword = 'MARKWON_KEYSTORE_FILE_PASSWORD'
-                final def keystoreAlias = 'MARKWON_KEY_ALIAS'
-                final def keystoreAliasPassword = 'MARKWON_KEY_ALIAS_PASSWORD'
-
-                final def properties = [
-                        keystoreFilePassword,
-                        keystoreAlias,
-                        keystoreAliasPassword
-                ]
-
-                if (!keystoreFile.exists()) {
-                    throw new IllegalStateException("No '${keystoreFile.name}' file is found.")
-                }
-
-                final def missingProperties = properties.findAll { !project.hasProperty(it) }
-                if (!missingProperties.isEmpty()) {
-                    throw new IllegalStateException("Missing required signing properties: $missingProperties")
-                }
-
-                storeFile keystoreFile
-                storePassword project[keystoreFilePassword]
-
-                keyAlias project[keystoreAlias]
-                keyPassword project[keystoreAliasPassword]
-            }
         }
 
         buildTypes {
             debug {
-                signingConfig signingConfigs.config
+                // 使用默认 debug 签名，便于直接编译出 APK
             }
             release {
-                signingConfig signingConfigs.config
+                // 使用默认签名以便直接打出 release 包；正式发布时请配置 signingConfig signingConfigs.release 并确保 keystore 存在且别名正确
+                // signingConfig signingConfigs.release
             }
         }
     }
@@ -114,6 +82,8 @@ androidExtensions {
 
 configurations.all {
     exclude group: 'org.jetbrains', module: 'annotations-java5'
+    // 避免 D8 处理 error_prone_annotations 时的 NullPointerException（仅编译/注解需要）
+    exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
 }
 
 dependencies {
